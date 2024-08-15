@@ -10,17 +10,16 @@ let activeViewer = null;
 fetchSessions();
 setupEventListeners();
 
-function fetchSessions() {
-    fetch("https://api.resonite.com/sessions")
-        .then(response => response.json())
-        .then(data => {
-            sessions = data;
-            renderSessions(sessions);
-            populateUserDropdown(sessions);
-        })
-        .catch(error => {
-            console.error("Error fetching sessions:", error);
-        });
+async function fetchSessions() {
+    try {
+        const response = await fetch("https://api.resonite.com/sessions");
+        const data = await response.json();
+        renderSessions(data);
+        populateUserDropdown(data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching sessions:", error);
+    }
 }
 
 function popsessions(error, reply) {
