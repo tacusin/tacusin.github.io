@@ -10,16 +10,35 @@ let activeViewer = null;
 fetchSessions();
 setupEventListeners();
 
-async function fetchSessions() {
-    try {
-        const response = await fetch("http://api.resonite.com/sessions");
-        const data = await response.json();
-        renderSessions(data);
-        populateUserDropdown(data);
-        return data;
-    } catch (error) {
-        console.error("Error fetching sessions:", error);
-    }
+function fetchSessions() {
+    const corsOptions = {
+        method: 'GET',
+        mode: 'cors', // Enable CORS
+        credentials: 'include', // Include cookies in the request
+        headers: {
+            'Content-Type': 'application/json',
+            // Add any additional headers required by the API
+            // 'Authorization': 'Bearer YOUR_TOKEN_HERE', // Uncomment and add token if required
+        }
+    };
+
+    fetch("https://api.resonite.com/sessions", corsOptions)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            sessions = data;
+            renderSessions(sessions);
+            populateUserDropdown(sessions);
+        })
+        .catch(error => {
+            console.error("Error fetching sessions:", error);
+            // You might want to update the UI to show the error to the user
+            document.getElementById('sessionsContainer').innerHTML = `<div class="error">Error fetching sessions: ${error.message}</div>`;
+        });
 }
 
 function popsessions(error, reply) {
