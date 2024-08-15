@@ -11,7 +11,14 @@ fetchSessions();
 setupEventListeners();
 
 function fetchSessions() {
-    app.HttpRequest("GET", "https://api.resonite.com/sessions", null, null, popsessions);
+    fetch("https://api.resonite.com/sessions")
+        .then(response => response.json())
+        .then(data => {
+            popsessions(null, JSON.stringify(data));
+        })
+        .catch(error => {
+            popsessions(error, null);
+        });
 }
 
 function popsessions(error, reply) {
@@ -218,4 +225,38 @@ function filterSessions() {
     });
 
     renderSessions(filteredSessions);
+}
+
+function showPopup(text) {
+    // Create a new div element for the popup
+    const popup = document.createElement('div');
+
+    // Set the content and style of the popup
+    popup.textContent = text;
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border: 1px solid black;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        z-index: 1000;
+    `;
+
+    // Create a close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close';
+    closeButton.style.marginTop = '10px';
+    closeButton.onclick = function() {
+        document.body.removeChild(popup);
+    };
+    
+    // Add the close button to the popup
+    popup.appendChild(document.createElement('br'));
+    popup.appendChild(closeButton);
+
+    // Add the popup to the body
+    document.body.appendChild(popup);
 }
