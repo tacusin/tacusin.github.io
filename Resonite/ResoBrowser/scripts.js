@@ -6,6 +6,7 @@ let pullDistance = 0;
 const REFRESH_THRESHOLD = 100; // pixels
 let activeViewer = null;
 
+
 fetchSessions();
 setupEventListeners();
 
@@ -20,6 +21,16 @@ function fetchSessions() {
         .catch(error => {
             console.error("Error fetching sessions:", error);
         });
+}
+
+function popsessions(error, reply) {
+    if (error) {
+        console.error("Error fetching sessions:", error);
+        return;
+    }
+    sessions = JSON.parse(reply);
+    renderSessions(sessions);
+    populateUserDropdown(sessions);
 }
 
 function renderSessions(sessionsToRender) {
@@ -216,4 +227,4 @@ function filterSessions() {
     });
 
     renderSessions(filteredSessions);
-        }
+}
