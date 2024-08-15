@@ -6,22 +6,20 @@ let pullDistance = 0;
 const REFRESH_THRESHOLD = 100; // pixels
 let activeViewer = null;
 
-
 fetchSessions();
 setupEventListeners();
 
 function fetchSessions() {
-    app.HttpRequest("GET", "https://api.resonite.com/sessions", null, null, popsessions);
-}
-
-function popsessions(error, reply) {
-    if (error) {
-        console.error("Error fetching sessions:", error);
-        return;
-    }
-    sessions = JSON.parse(reply);
-    renderSessions(sessions);
-    populateUserDropdown(sessions);
+    fetch("https://api.resonite.com/sessions")
+        .then(response => response.json())
+        .then(data => {
+            sessions = data;
+            renderSessions(sessions);
+            populateUserDropdown(sessions);
+        })
+        .catch(error => {
+            console.error("Error fetching sessions:", error);
+        });
 }
 
 function renderSessions(sessionsToRender) {
@@ -218,4 +216,4 @@ function filterSessions() {
     });
 
     renderSessions(filteredSessions);
-}
+        }
