@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <link rel="manifest" href="manifest.json" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions from API</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="360viewer.js"></script>
+    <script src="ds:/Sys/app.js"></script>
+</head>
+<body>
+    <h1>Resonite Worlds</h1>
+    <div class="filter-section">
+        <label class="filter-label" for="filterInput">Filter by username:</label>
+        <input type="text" id="filterInput" placeholder="Filter by username...">
+        <label class="filter-label" for="nameFilterInput">Filter by session name:</label>
+        <input type="text" id="nameFilterInput" placeholder="Filter by session name...">
+        <label class="filter-label" for="userDropdown">Select an online user:</label>
+        <select id="userDropdown">
+            <option value="">-- All Users --</option>
+        </select>
+        <input type="checkbox" id="emptyHeadlessToggle"> 
+        <label class="filter-label" for="emptyHeadlessToggle">Filter out empty headless sessions</label>
+    </div>
+  
+    <div id="sessionsContainer">
+        <!-- Sessions will be dynamically inserted here -->
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
