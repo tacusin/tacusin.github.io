@@ -1,0 +1,15 @@
+{
+  "name": "Resonite Public Session Browser",
+  "short_name": "ResoBrowser",
+  "start_url": "../Index.html",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "A way to check public Resonite Sessions.",
+  "icons": [
+    {
+      "src": "../ResoBrowser.png",
+      "sizes": "600x600",
+      "type": "image/png"
+    }
+  ]
+}
