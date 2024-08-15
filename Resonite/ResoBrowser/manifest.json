@@ -7,7 +7,7 @@
   "description": "A way to check public Resonite Sessions.",
   "icons": [
     {
-      "src": "../ResoBrowser.png",
+      "src": "../icon.png",
       "sizes": "600x600",
       "type": "image/png"
     }
