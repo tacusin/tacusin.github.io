@@ -12,7 +12,7 @@ setupEventListeners();
 
 async function fetchSessions() {
     try {
-        const response = await fetch("https://api.resonite.com/sessions");
+        const response = await fetch("http://api.resonite.com/sessions");
         const data = await response.json();
         renderSessions(data);
         populateUserDropdown(data);
