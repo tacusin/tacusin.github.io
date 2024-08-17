@@ -11,7 +11,7 @@ fetchSessions();
 setupEventListeners();
 
 function fetchSessions() {
-    fetch("https://api.resonite.com/sessions")
+    fetch("https://corsproxy.io/?https%3A%2F%2Fapi.resonite.com%2Fsessions")
         .then(response => response.json())
         .then(data => {
             popsessions(null, JSON.stringify(data));
