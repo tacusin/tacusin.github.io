@@ -3,12 +3,12 @@
   "name": "Resonite Session Browser",
   "icons": [
     {
-      "src": "/icom.png",
+      "src": "/icon.png",
       "sizes": "600x600",
       "type": "image/png"
     }
   ],
-  "start_url": ".",
+  "start_url": "../index.html",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
