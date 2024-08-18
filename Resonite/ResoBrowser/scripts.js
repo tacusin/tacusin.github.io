@@ -71,8 +71,8 @@ function createSessionHTML(data) {
     return `
     <details data-host="${data.hostUsername}" data-users="${data.sessionUsers.map(user => user.username).join(',')}">
         <summary>${data.name} by ${data.hostUsername}</summary>
-        <div class="thumbnail-container" data-thumbnail="${data.thumbnailUrl}">
-            <img src="${data.thumbnailUrl}" alt="${data.name} Thumbnail" class="static-thumbnail">
+        <div class="thumbnail-container" data-thumbnail="${data.thumbnailUrl ?? "./nothumbnail.png"}">
+            <img src="${data.thumbnailUrl ?? "./nothumbnail.png"}" alt="${data.name} Thumbnail" class="static-thumbnail">
         </div>
         <ul>
             <li><strong>Session Name:</strong> ${data.name}</li>
