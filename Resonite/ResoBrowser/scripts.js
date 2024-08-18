@@ -52,7 +52,7 @@ function initializeViewer(container) {
     }
 
     // Create a new viewer for the clicked thumbnail
-    const thumbnailUrl = container.querySelector('.static-thumbnail');
+    const thumbnailUrl = container.querySelector('.static-thumbnail').src;
     try {
         activeViewer = new Viewer360(thumbnailUrl, container);
         
