@@ -17,7 +17,7 @@ class Viewer360 {
         const geometry = new THREE.SphereGeometry(500, 60, 40);
         geometry.scale(-1, 1, 1);
 
-        const texture = new THREE.TextureLoader()(imageUrl);
+        const texture = new THREE.Texture(imageUrl);
         const material = new THREE.MeshBasicMaterial({ map: texture });
 
         const sphere = new THREE.Mesh(geometry, material);
