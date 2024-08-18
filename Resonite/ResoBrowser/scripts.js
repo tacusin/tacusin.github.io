@@ -52,7 +52,7 @@ function initializeViewer(container) {
     }
 
     // Create a new viewer for the clicked thumbnail
-    const thumbnailUrl = container.dataset.thumbnail;
+    const thumbnailUrl = container.querySelector('.static-thumbnail');
     try {
         activeViewer = new Viewer360(thumbnailUrl, container);
         
