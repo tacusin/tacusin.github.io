@@ -17,16 +17,11 @@ class Viewer360 {
         const geometry = new THREE.SphereGeometry(500, 60, 40);
         geometry.scale(-1, 1, 1);
 
-        // Create an image object and set up its onload handler
-        const image = new Image();
-        image.onload = () => {
-            const texture = new THREE.Texture(image);
-            texture.needsUpdate = true;
-            const material = new THREE.MeshBasicMaterial({ map: texture });
-            this.sphere = new THREE.Mesh(geometry, material);
-            this.scene.add(this.sphere);
-        };
-        image.src = imageUrl;
+        const texture = new THREE.TextureLoader().load(imageUrl);
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const sphere = new THREE.Mesh(geometry, material);
+        this.scene.add(sphere);
 
         this.setupEventListeners();
         this.animate();
@@ -43,13 +38,11 @@ class Viewer360 {
         this.container.removeEventListener('touchend', this.onTouchEnd);
 
         // Dispose of Three.js objects
-        if (this.sphere) {
-            this.scene.remove(this.sphere);
-            this.sphere.geometry.dispose();
-            this.sphere.material.dispose();
-            this.sphere.material.map.dispose();
-        }
-        this.renderer.dispose();
+        this.scene.remove(this.sphere);
+        /*this.geometry.dispose();
+        this.material.dispose();
+        this.texture.dispose();
+        this.renderer.dispose();*/
 
         // Remove the canvas from the DOM
         this.container.removeChild(this.renderer.domElement);
@@ -132,4 +125,4 @@ class Viewer360 {
 
         this.renderer.render(this.scene, this.camera);
     }
-}
+    } 
