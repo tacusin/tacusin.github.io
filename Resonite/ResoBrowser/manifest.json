@@ -3,7 +3,7 @@
   "name": "Resonite Session Browser",
   "icons": [
     {
-      "src": "../icon.png",
+      "src": "./icon.png",
       "sizes": "600x600",
       "type": "image/png"
     }
