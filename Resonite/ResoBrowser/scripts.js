@@ -227,6 +227,13 @@ function filterSessions() {
     renderSessions(filteredSessions);
 }
 
+// initialize service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+  });
+}
+
 function showPopup(text) {
     // Create a new div element for the popup
     const popup = document.createElement('div');
