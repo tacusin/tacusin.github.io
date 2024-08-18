@@ -1,6 +1,7 @@
 let sessions = [];
 let selectedUser = '';
 let isRefreshing = false;
+let isPulling = false;
 let startY = 0;
 let pullDistance = 0;
 const REFRESH_THRESHOLD = 100; // pixels
@@ -168,6 +169,7 @@ function setupEventListeners() {
 }
 
 function startPull(e) {
+    isPulling = true;
     startY = e.pageY || e.touches[0].pageY;
     isRefreshing = false;
     pullDistance = 0;
@@ -175,6 +177,7 @@ function startPull(e) {
 
 function pull(e) {
     if (isRefreshing) return;
+    if (!isPulling) return;
 
     const y = e.pageY || e.touches[0].pageY;
     pullDistance = y - startY;
@@ -185,6 +188,7 @@ function pull(e) {
 }
 
 function endPull() {
+    isPulling = false;
     const container = document.getElementById('sessionsContainer');
     container.style.transition = 'transform 0.3s ease-out';
     container.style.transform = 'translateY(0)';
