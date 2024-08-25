@@ -17,7 +17,8 @@ class Viewer360 {
         const geometry = new THREE.SphereGeometry(500, 60, 40);
         geometry.scale(-1, 1, 1);
 
-        const texture = new THREE.TextureLoader().load(imageUrl);
+        const url = 'https://corsproxy.io/?' + encodeURIComponent(imageUrl);
+        const texture = new THREE.TextureLoader().load(url);
         const material = new THREE.MeshBasicMaterial({ map: texture });
 
         const sphere = new THREE.Mesh(geometry, material);
