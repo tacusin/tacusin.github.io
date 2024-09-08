@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dropbox Card Image Saver</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox/10.34.0/Dropbox-sdk.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         input, button { margin: 10px 0; padding: 5px; }
-        #output { margin-top: 20px; }
+        #output, #progress { margin-top: 20px; }
+        #progressBar { width: 100%; background-color: #f0f0f0; }
+        #progressBar div { height: 20px; background-color: #4CAF50; width: 0; }
     </style>
 </head>
 <body>
@@ -25,14 +26,42 @@
         <input type="file" id="fileInput" accept=".json">
     </div>
     <button onclick="processFile()">Process JSON and Save Card Images</button>
+    <div id="progress">
+        <div id="progressBar"><div></div></div>
+        <div id="progressText"></div>
+    </div>
     <div id="output"></div>
 
     <script>
+        async function saveUrl(accessToken, path, url) {
+            const response = await fetch('https://api.dropboxapi.com/2/files/save_url', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ path, url })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        function updateProgress(current, total) {
+            const percentage = (current / total) * 100;
+            document.querySelector('#progressBar div').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `Processing ${current} of ${total}`;
+        }
+
         async function processFile() {
             const accessToken = document.getElementById('accessToken').value;
             const folderPath = document.getElementById('folderPath').value || '';
             const fileInput = document.getElementById('fileInput');
             const outputDiv = document.getElementById('output');
+            const progressDiv = document.getElementById('progress');
             
             if (!accessToken) {
                 outputDiv.innerHTML = 'Please enter your Dropbox access token.';
@@ -43,8 +72,6 @@
                 outputDiv.innerHTML = 'Please select a JSON file.';
                 return;
             }
-
-            const dbx = new Dropbox.Dropbox({ accessToken: accessToken });
 
             const file = fileInput.files[0];
             const fileContent = await file.text();
@@ -57,25 +84,26 @@
                 return;
             }
 
-            outputDiv.innerHTML = 'Processing...';
+            outputDiv.innerHTML = '';
+            progressDiv.style.display = 'block';
+            updateProgress(0, jsonData.length);
 
-            for (const item of jsonData) {
+            for (let i = 0; i < jsonData.length; i++) {
+                const item = jsonData[i];
                 try {
                     if (!item.id || !item.card_images) {
                         throw new Error('Missing id or card_images');
                     }
                     const filePath = `${folderPath}/${item.id}.jpg`.replace(/\/+/g, '/');
-                    const response = await dbx.filesSaveUrl({
-                        path: filePath,
-                        url: item.card_images
-                    });
-                    outputDiv.innerHTML += `<p>Saved ${item.card_images} as ${filePath}</p>`;
+                    const response = await saveUrl(accessToken, filePath, item.card_images);
+                    outputDiv.innerHTML += `<p>Initiated save for ${item.card_images} as ${filePath}</p>`;
                 } catch (error) {
                     outputDiv.innerHTML += `<p>Error saving image for ID ${item.id}: ${error.message}</p>`;
                 }
+                updateProgress(i + 1, jsonData.length);
             }
 
-            outputDiv.innerHTML += '<p>Processing complete!</p>';
+            outputDiv.innerHTML += '<p>Processing complete! Check your Dropbox for the saved files.</p>';
         }
     </script>
 </body>
