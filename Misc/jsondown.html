@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropbox Card Image Saver</title>
+    <title>Dropbox URL Saver</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         input, button { margin: 10px 0; padding: 5px; }
@@ -13,19 +13,19 @@
     </style>
 </head>
 <body>
-    <h1>Dropbox Card Image Saver</h1>
+    <h1>Dropbox URL Saver</h1>
     <div>
         <label for="accessToken">Dropbox Access Token:</label>
         <input type="password" id="accessToken" placeholder="Enter your Dropbox access token">
     </div>
     <div>
         <label for="folderPath">Target Folder Path:</label>
-        <input type="text" id="folderPath" placeholder="e.g., /MyCardImages">
+        <input type="text" id="folderPath" placeholder="e.g., /MyFiles">
     </div>
     <div>
         <input type="file" id="fileInput" accept=".txt">
     </div>
-    <button onclick="processFile()">Process JSON and Save Card Images</button>
+    <button onclick="processFile()">Process File and Save URLs</button>
     <div id="progress">
         <div id="progressBar"><div></div></div>
         <div id="progressText"></div>
@@ -40,7 +40,10 @@
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ path, url })
+                body: JSON.stringify({
+                    path: path,
+                    url: url
+                })
             });
 
             if (!response.ok) {
@@ -69,7 +72,7 @@
             }
 
             if (fileInput.files.length === 0) {
-                outputDiv.innerHTML = 'Please select a JSON file.';
+                outputDiv.innerHTML = 'Please select a text file containing JSON data.';
                 return;
             }
 
@@ -80,7 +83,7 @@
             try {
                 jsonData = JSON.parse(fileContent);
             } catch (error) {
-                outputDiv.innerHTML = 'Error parsing JSON file: ' + error.message;
+                outputDiv.innerHTML = 'Error parsing JSON from file: ' + error.message;
                 return;
             }
 
