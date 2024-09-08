@@ -82,6 +82,14 @@
 
             try {
                 jsonData = JSON.parse(fileContent);
+                // Check if it's an object with a data property that is an array
+                if (jsonData && typeof jsonData === 'object' && Array.isArray(jsonData.data)) {
+                    jsonData = jsonData.data;
+                }
+                // Ensure jsonData is an array
+                if (!Array.isArray(jsonData)) {
+                    throw new Error('JSON data is not in the expected format (array or object with data array)');
+                }
             } catch (error) {
                 outputDiv.innerHTML = 'Error parsing JSON from file: ' + error.message;
                 return;
