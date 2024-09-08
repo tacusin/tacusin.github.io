@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropbox Card Image Saver</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox/10.34.0/Dropbox-sdk.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        input, button { margin: 10px 0; padding: 5px; }
+        #output { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Dropbox Card Image Saver</h1>
+    <div>
+        <label for="accessToken">Dropbox Access Token:</label>
+        <input type="password" id="accessToken" placeholder="Enter your Dropbox access token">
+    </div>
+    <div>
+        <label for="folderPath">Target Folder Path:</label>
+        <input type="text" id="folderPath" placeholder="e.g., /MyCardImages">
+    </div>
+    <div>
+        <input type="file" id="fileInput" accept=".json">
+    </div>
+    <button onclick="processFile()">Process JSON and Save Card Images</button>
+    <div id="output"></div>
+
+    <script>
+        async function processFile() {
+            const accessToken = document.getElementById('accessToken').value;
+            const folderPath = document.getElementById('folderPath').value || '';
+            const fileInput = document.getElementById('fileInput');
+            const outputDiv = document.getElementById('output');
+            
+            if (!accessToken) {
+                outputDiv.innerHTML = 'Please enter your Dropbox access token.';
+                return;
+            }
+
+            if (fileInput.files.length === 0) {
+                outputDiv.innerHTML = 'Please select a JSON file.';
+                return;
+            }
+
+            const dbx = new Dropbox.Dropbox({ accessToken: accessToken });
+
+            const file = fileInput.files[0];
+            const fileContent = await file.text();
+            let jsonData;
+
+            try {
+                jsonData = JSON.parse(fileContent);
+            } catch (error) {
+                outputDiv.innerHTML = 'Error parsing JSON file: ' + error.message;
+                return;
+            }
+
+            outputDiv.innerHTML = 'Processing...';
+
+            for (const item of jsonData) {
+                try {
+                    if (!item.id || !item.card_images) {
+                        throw new Error('Missing id or card_images');
+                    }
+                    const filePath = `${folderPath}/${item.id}.jpg`.replace(/\/+/g, '/');
+                    const response = await dbx.filesSaveUrl({
+                        path: filePath,
+                        url: item.card_images
+                    });
+                    outputDiv.innerHTML += `<p>Saved ${item.card_images} as ${filePath}</p>`;
+                } catch (error) {
+                    outputDiv.innerHTML += `<p>Error saving image for ID ${item.id}: ${error.message}</p>`;
+                }
+            }
+
+            outputDiv.innerHTML += '<p>Processing complete!</p>';
+        }
+    </script>
+</body>
+</html>
