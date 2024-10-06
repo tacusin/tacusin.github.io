@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimJ Creator</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        input, select, button { margin: 5px; padding: 5px; }
+        button { cursor: pointer; background-color: #4CAF50; color: white; border: none; padding: 10px 20px; }
+        button:hover { background-color: #45a049; }
+        #output { white-space: pre-wrap; background-color: #f0f0f0; padding: 10px; border-radius: 5px; }
+        .track { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .keyframe { border: 1px solid #eee; padding: 5px; margin-bottom: 5px; border-radius: 3px; }
+        .remove-btn { background-color: #f44336; }
+        .remove-btn:hover { background-color: #da190b; }
+        .matrix-input { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .keyframe-container { position: relative; }
+        .keyframe-handle { cursor: move; padding: 2px 5px; background-color: #ddd; display: inline-block; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h1>AnimJ Creator</h1>
+    
+    <h2>Animation Properties</h2>
+    <input type="text" id="animationName" placeholder="Animation Name">
+    <input type="number" id="globalDuration" placeholder="Global Duration (optional)">
+    
+    <h2>Tracks</h2>
+    <div id="tracks"></div>
+    <button onclick="addTrack()">Add Track</button>
+    
+    <h2>Output</h2>
+    <button onclick="generateJSON()">Generate JSON</button>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+    <pre id="output"></pre>
+
+    <script>
+        const valueTypes = [
+            "bool", "bool2", "bool3", "bool4",
+            "byte", "sbyte", "short", "ushort", "int", "uint", "long", "ulong",
+            "float", "double",
+            "int2", "int3", "int4", "uint2", "uint3", "uint4", "long2", "long3", "long4",
+            "float2", "float3", "float4", "floatQ",
+            "double2", "double3", "double4", "doubleQ",
+            "float2x2", "float3x3", "float4x4",
+            "double2x2", "double3x3", "double4x4",
+            "color", "color32", "string"
+        ];
+
+        let trackCount = 0;
+
+        function addTrack() {
+            const tracksDiv = document.getElementById('tracks');
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'track';
+            trackDiv.innerHTML = `
+                <h3>Track ${++trackCount}</h3>
+                <select class="trackType" onchange="updateTrackType(this)">
+                    <option value="Raw">Raw</option>
+                    <option value="Discrete">Discrete</option>
+                    <option value="Curve">Curve</option>
+                </select>
+                <select class="valueType" onchange="updateValueType(this)">
+                    ${valueTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+                <input type="text" class="node" placeholder="Node">
+                <input type="text" class="property" placeholder="Property">
+                <div class="keyframes"></div>
+                <button onclick="addKeyframe(this)">Add Keyframe</button>
+                <button class="remove-btn" onclick="removeTrack(this)">Remove Track</button>
+                <input type="number" class="interval" placeholder="Interval (for Raw type)" style="display:none;">
+            `;
+            tracksDiv.appendChild(trackDiv);
+            initSortable(trackDiv.querySelector('.keyframes'));
+        }
+
+        function updateTrackType(select) {
+            const trackDiv = select.closest('.track');
+            const intervalInput = trackDiv.querySelector('.interval');
+            const keyframesDiv = trackDiv.querySelector('.keyframes');
+            const interpolationSelects = trackDiv.querySelectorAll('.interpolation');
+
+            if (select.value === 'Raw') {
+                intervalInput.style.display = 'inline-block';
+                keyframesDiv.innerHTML = '';
+                addKeyframe(trackDiv.querySelector('button'));
+            } else {
+                intervalInput.style.display = 'none';
+            }
+
+            interpolationSelects.forEach(sel => {
+                sel.style.display = select.value === 'Curve' ? 'inline-block' : 'none';
+            });
+
+            updateKeyframeOrder(keyframesDiv);
+        }
+
+        function updateValueType(select) {
+            const trackDiv = select.closest('.track');
+            const keyframes = trackDiv.querySelectorAll('.keyframe');
+            keyframes.forEach(keyframe => {
+                updateValueInputType(keyframe.querySelector('.value-container'), select.value);
+            });
+        }
+
+        function addKeyframe(button) {
+            const keyframesDiv = button.previousElementSibling;
+            const keyframeDiv = document.createElement('div');
+            keyframeDiv.className = 'keyframe';
+            const trackType = button.closest('.track').querySelector('.trackType').value;
+            const valueType = button.closest('.track').querySelector('.valueType').value;
+
+            keyframeDiv.innerHTML = `
+                <div class="keyframe-container">
+                    <span class="keyframe-handle">::</span>
+                    ${trackType !== 'Raw' ? '<input type="number" class="time" placeholder="Time" step="0.01">' : ''}
+                    <div class="value-container"></div>
+                    <select class="interpolation" style="display:none;">
+                        <option value="Linear">Linear</option>
+                        <option value="Tangent">Tangent</option>
+                        <option value="Hold">Hold</option>
+                        <option value="CubicBezier">CubicBezier</option>
+                    </select>
+                    <button class="remove-btn" onclick="removeKeyframe(this)">Remove</button>
+                </div>
+            `;
+            keyframesDiv.appendChild(keyframeDiv);
+
+            if (trackType === 'Curve') {
+                keyframeDiv.querySelector('.interpolation').style.display = 'inline-block';
+            }
+
+            updateValueInputType(keyframeDiv.querySelector('.value-container'), valueType);
+            updateKeyframeOrder(keyframesDiv);
+        }
+
+        function removeTrack(button) {
+            button.closest('.track').remove();
+            updateTrackNumbers();
+        }
+
+        function removeKeyframe(button) {
+            const keyframesDiv = button.closest('.keyframes');
+            button.closest('.keyframe').remove();
+            updateKeyframeOrder(keyframesDiv);
+        }
+
+        function updateValueInputType(container, valueType) {
+            container.innerHTML = '';
+            if (valueType.startsWith('bool')) {
+                const count = valueType === 'bool' ? 1 : parseInt(valueType.slice(-1));
+                for (let i = 0; i < count; i++) {
+                    container.innerHTML += `
+                        <select class="bool-value">
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                        </select>
+                    `;
+                }
+            } else if (valueType.includes('x')) {
+                const [rows, cols] = valueType.split('x').map(Number);
+                container.innerHTML = `<div class="matrix-input">
+                    ${Array(rows * cols).fill().map(() => '<input type="number" step="any">').join('')}
+                </div>`;
+            } else if (['byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong'].includes(valueType)) {
+                container.innerHTML = '<input type="number" step="1">';
+            } else if (['float', 'double'].includes(valueType)) {
+                container.innerHTML = '<input type="number" step="any">';
+            } else if (valueType.includes('2') || valueType.includes('3') || valueType.includes('4')) {
+                const count = parseInt(valueType.slice(-1));
+                for (let i = 0; i < count; i++) {
+                    container.innerHTML += `<input type="number" step="any" placeholder="${['x', 'y', 'z', 'w'][i]}">`;
+                }
+            } else if (valueType === 'color' || valueType === 'color32') {
+                container.innerHTML = `
+                    <input type="number" step="0.01" min="0" max="1" placeholder="R">
+                    <input type="number" step="0.01" min="0" max="1" placeholder="G">
+                    <input type="number" step="0.01" min="0" max="1" placeholder="B">
+                    <input type="number" step="0.01" min="0" max="1" placeholder="A">
+                `;
+            } else {
+                container.innerHTML = '<input type="text">';
+            }
+        }
+
+        function updateTrackNumbers() {
+            document.querySelectorAll('.track').forEach((track, index) => {
+                track.querySelector('h3').textContent = `Track ${index + 1}`;
+            });
+            trackCount = document.querySelectorAll('.track').length;
+        }
+
+        function initSortable(container) {
+            new Sortable(container, {
+                animation: 150,
+                handle: '.keyframe-handle',
+                onEnd: function() {
+                    updateKeyframeOrder(container);
+                }
+            });
+        }
+
+        function updateKeyframeOrder(container) {
+            container.querySelectorAll('.keyframe-handle').forEach((handle, index) => {
+                handle.textContent = `#${index + 1}`;
+            });
+        }
+
+        function generateJSON() {
+            const animation = {
+                name: document.getElementById('animationName').value,
+                globalDuration: parseFloat(document.getElementById('globalDuration').value) || 0,
+                tracks: []
+            };
+
+            document.querySelectorAll('#tracks > div').forEach(trackDiv => {
+                const trackType = trackDiv.querySelector('.trackType').value;
+                const valueType = trackDiv.querySelector('.valueType').value;
+                const track = {
+                    trackType: trackType,
+                    valueType: valueType,
+                    data: {
+                        node: trackDiv.querySelector('.node').value,
+                        property: trackDiv.querySelector('.property').value,
+                        keyframes: []
+                    }
+                };
+
+                if (trackType === 'Raw') {
+                    track.data.interval = parseFloat(trackDiv.querySelector('.interval').value) || 0;
+                }
+
+                trackDiv.querySelectorAll('.keyframes > div').forEach(keyframeDiv => {
+                    const keyframe = {};
+                    if (trackType !== 'Raw') {
+                        keyframe.time = parseFloat(keyframeDiv.querySelector('.time').value);
+                    }
+                    keyframe.value = parseValue(keyframeDiv.querySelector('.value-container'), valueType);
+
+                    if (trackType === 'Curve') {
+                        keyframe.interpolation = keyframeDiv.querySelector('.interpolation').value;
+                    }
+
+                    track.data.keyframes.push(keyframe);
+                });
+
+                animation.tracks.push(track);
+            });
+
+            document.getElementById('output').textContent = JSON.stringify(animation, null, 2);
+        }
+
+        function parseValue(container, type) {
+            if (type.startsWith('bool')) {
+                const boolValues = Array.from(container.querySelectorAll('.bool-value')).map(select => select.value === 'true');
+                return type === 'bool' ? boolValues[0] : boolValues;
+            } else if (type.includes('x')) {
+                const values = Array.from(container.querySelectorAll('input')).map(input => parseFloat(input.value));
+                const [rows, cols] = type.split('x').map(Number);
+                return Array(rows).fill().map((_, i) => values.slice(i * cols, (i + 1) * cols));
+            } else if (['byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong'].includes(type)) {
+                return parseInt(container.querySelector('input').value);
+            } else if (['float', 'double'].includes(type)) {
+                return parseFloat(container.querySelector('input').value);
+            } else if (type.includes('2') || type.includes('3') || type.includes('4')) {
+                return Array.from(container.querySelectorAll('input')).map(input => parseFloat(input.value));
+            } else if (type === 'color' || type === 'color32') {
+                return Array.from(container.querySelectorAll('input')).reduce((obj, input, index) => {
+                    obj[['r', 'g', 'b', 'a'][index]] = parseFloat(input.value);
+                    return obj;
+                }, {});
+            } else {
+                return container.querySelector('input').value;
+            }
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                alert('JSON copied to clipboard!');
+            });
+        }
+
+        // Add initial track
+        addTrack();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</body>
+</html>
