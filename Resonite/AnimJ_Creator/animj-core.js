@@ -15,13 +15,22 @@ let trackCount = 0;
 function parseValue(container, type) {
     if (type.startsWith('bool')) {
         const boolValues = Array.from(container.querySelectorAll('.bool-value')).map(select => select.value === 'true');
-        return type === 'bool' ? boolValues[0] : boolValues;
-    } else if (['byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong'].includes(type)) {
-        return parseInt(container.querySelector('input').value);
-    } else if (['float', 'double'].includes(type)) {
+        return type === 'bool' ? boolValues[0] : {
+            x: boolValues[0],
+            y: boolValues[1],
+            z: boolValues[2] || undefined,
+            w: boolValues[3] || undefined
+        };
+    } else if (['byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'float', 'double'].includes(type)) {
         return parseFloat(container.querySelector('input').value);
     } else if (type.includes('2') || type.includes('3') || type.includes('4') || type === 'floatQ' || type === 'doubleQ') {
-        return Array.from(container.querySelectorAll('input')).map(input => parseFloat(input.value));
+        const values = Array.from(container.querySelectorAll('input')).map(input => parseFloat(input.value));
+        return {
+            x: values[0],
+            y: values[1],
+            z: values[2] || undefined,
+            w: values[3] || undefined
+        };
     } else if (type === 'color' || type === 'color32') {
         return Array.from(container.querySelectorAll('input')).reduce((obj, input, index) => {
             obj[['r', 'g', 'b', 'a'][index]] = parseFloat(input.value);
