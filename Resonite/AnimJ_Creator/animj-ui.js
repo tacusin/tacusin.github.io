@@ -64,12 +64,22 @@ function addKeyframe(button) {
         <span class="keyframe-number"></span>
         ${trackType !== 'Raw' ? '<input type="number" class="time" placeholder="Time" step="0.01">' : ''}
         <div class="value-container"></div>
-        <select class="interpolation" style="display:none;">
+        <select class="interpolation" style="display:none;" onchange="updateTangentFields(this)">
             <option value="Linear">Linear</option>
             <option value="Tangent">Tangent</option>
             <option value="Hold">Hold</option>
             <option value="CubicBezier">CubicBezier</option>
         </select>
+        <div class="tangent-container" style="display:none;">
+            <div class="left-tangent">
+                <label>Left Tangent:</label>
+                <div class="value-container left-tangent-value"></div>
+            </div>
+            <div class="right-tangent">
+                <label>Right Tangent:</label>
+                <div class="value-container right-tangent-value"></div>
+            </div>
+        </div>
         <button class="order-btn" onclick="moveKeyframeUp(this)">↑</button>
         <button class="order-btn" onclick="moveKeyframeDown(this)">↓</button>
         <button class="remove-btn" onclick="removeKeyframe(this)">Remove</button>
@@ -81,7 +91,18 @@ function addKeyframe(button) {
     }
 
     updateValueInputType(keyframeDiv.querySelector('.value-container'), valueType);
+    updateValueInputType(keyframeDiv.querySelector('.left-tangent-value'), valueType);
+    updateValueInputType(keyframeDiv.querySelector('.right-tangent-value'), valueType);
     updateKeyframeOrder(keyframesDiv);
+}
+
+function updateTangentFields(select) {
+    const tangentContainer = select.nextElementSibling;
+    if (select.value === 'Tangent' || select.value === 'CubicBezier') {
+        tangentContainer.style.display = 'block';
+    } else {
+        tangentContainer.style.display = 'none';
+    }
 }
 
 function removeTrack(button) {
