@@ -33,6 +33,10 @@ function generateJSON() {
 
             if (trackType === 'Curve') {
                 keyframe.interpolation = keyframeDiv.querySelector('.interpolation').value;
+                if (keyframe.interpolation === 'Tangent' || keyframe.interpolation === 'CubicBezier') {
+                    keyframe.leftTangent = parseValue(keyframeDiv.querySelector('.left-tangent-value'), valueType);
+                    keyframe.rightTangent = parseValue(keyframeDiv.querySelector('.right-tangent-value'), valueType);
+                }
             }
 
             track.data.keyframes.push(keyframe);
