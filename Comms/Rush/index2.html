@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booster Pack Pull Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold mb-4">Booster Pack Pull Simulator</h1>
+            <div class="mb-4">
+                <label for="simulations" class="block text-sm font-medium text-gray-700">Number of Simulations:</label>
+                <input type="number" id="simulations" name="simulations" min="1" value="1000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Expected Outcomes:</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="expectedSuperRare" class="block text-sm font-medium text-gray-700">Expected Super Rare:</label>
+                        <input type="number" id="expectedSuperRare" name="expectedSuperRare" min="0" value="20" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="expectedUltraRare" class="block text-sm font-medium text-gray-700">Expected Ultra Rare:</label>
+                        <input type="number" id="expectedUltraRare" name="expectedUltraRare" min="0" value="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+            <div id="calculatedProbabilities" class="mb-4"></div>
+            <button id="runSimulations" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Run Simulations
+            </button>
+            <div id="booleanValues" class="mt-4"></div>
+            <div id="totalCount" class="mt-4"></div>
+            <div id="result" class="mt-4 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateProbabilities() {
+            const simulations = parseInt(document.getElementById('simulations').value);
+            const expectedSuperRare = parseInt(document.getElementById('expectedSuperRare').value);
+            const expectedUltraRare = parseInt(document.getElementById('expectedUltraRare').value);
+            
+            const superRareProb = expectedSuperRare / simulations;
+            const ultraRareProb = expectedUltraRare / simulations;
+            const rareProb = (1 - superRareProb - ultraRareProb) * 0.125; // 1/8 of remaining probability
+            const commonProb = 1 - superRareProb - ultraRareProb - rareProb;
+
+            return {
+                Common: commonProb * 100,
+                Rare: rareProb * 100,
+                'Super Rare': superRareProb * 100,
+                'Ultra Rare': ultraRareProb * 100
+            };
+        }
+
+        function updateCalculatedProbabilities() {
+            const probabilities = calculateProbabilities();
+            let probHTML = '<h3 class="text-md font-semibold mb-2">Calculated Probabilities:</h3><ul>';
+            for (const [rarity, prob] of Object.entries(probabilities)) {
+                probHTML += `<li><strong>${rarity}:</strong> ${prob.toFixed(2)}%</li>`;
+            }
+            probHTML += '</ul>';
+            document.getElementById('calculatedProbabilities').innerHTML = probHTML;
+        }
+
+        function getRandomCard(probabilities) {
+            const rand = Math.random() * 100;
+            let cumulativeProb = 0;
+            for (const [rarity, prob] of Object.entries(probabilities)) {
+                cumulativeProb += prob;
+                if (rand < cumulativeProb) {
+                    return rarity;
+                }
+            }
+            return 'Common'; // Fallback in case of rounding errors
+        }
+
+        function pullBoosterPack(probabilities) {
+            const pack = {
+                Common: 7,
+                Rare: 1,
+                'Super Rare': 0,
+                'Ultra Rare': 0
+            };
+
+            // Pull the wildcard
+            const wildcard = getRandomCard(probabilities);
+            pack[wildcard]++;
+
+            return { pack, wildcard };
+        }
+
+        function displayResults(results) {
+            let resultHTML = '<h2 class="text-xl font-semibold mb-2">Simulation Results:</h2>';
+            results.forEach((result, index) => {
+                resultHTML += `<div class="mb-4 ${index > 0 ? 'border-t pt-4' : ''}">`;
+                resultHTML += `<h3 class="font-semibold">Simulation ${index + 1}:</h3><ul>`;
+                for (const [rarity, count] of Object.entries(result.pack)) {
+                    if (count > 0) {
+                        resultHTML += `<li>${rarity}: ${count}</li>`;
+                    }
+                }
+                resultHTML += `</ul><p><strong>Wildcard:</strong> ${result.wildcard}</p></div>`;
+            });
+            document.getElementById('result').innerHTML = resultHTML;
+        }
+
+        function calculateBooleanValues(probabilities) {
+            const commonRareProb = probabilities.Common + probabilities.Rare;
+            const superRareProb = probabilities['Super Rare'];
+            const ultraRareProb = probabilities['Ultra Rare'];
+
+            const bool1 = commonRareProb / 100;
+            const bool2 = probabilities.Common / commonRareProb;
+            const bool3 = superRareProb / (superRareProb + ultraRareProb);
+
+            return {
+                'Common or Rare vs Super/Ultra Rare': bool1.toFixed(4),
+                'Common vs Rare (if Common/Rare)': bool2.toFixed(4),
+                'Super Rare vs Ultra Rare (if Super/Ultra)': bool3.toFixed(4)
+            };
+        }
+
+        function displayTotalCount(results) {
+            const totalCount = results.reduce((count, result) => {
+                count[result.wildcard] = (count[result.wildcard] || 0) + 1;
+                return count;
+            }, {});
+
+            let totalHTML = '<h2 class="text-xl font-semibold mb-2">Total Wildcard Count:</h2><ul>';
+            for (const [rarity, count] of Object.entries(totalCount)) {
+                totalHTML += `<li><strong>${rarity}:</strong> ${count} (${((count / results.length) * 100).toFixed(2)}%)</li>`;
+            }
+            totalHTML += '</ul>';
+            document.getElementById('totalCount').innerHTML = totalHTML;
+        }
+
+        // Add event listeners to input fields
+        document.getElementById('simulations').addEventListener('input', updateCalculatedProbabilities);
+        document.getElementById('expectedSuperRare').addEventListener('input', updateCalculatedProbabilities);
+        document.getElementById('expectedUltraRare').addEventListener('input', updateCalculatedProbabilities);
+
+        // Initial update of calculated probabilities
+        updateCalculatedProbabilities();
+
+        document.getElementById('runSimulations').addEventListener('click', () => {
+            const numSimulations = parseInt(document.getElementById('simulations').value);
+            const probabilities = calculateProbabilities();
+
+            // Calculate and display boolean values
+            const booleanValues = calculateBooleanValues(probabilities);
+            let booleanHTML = '<h2 class="text-xl font-semibold mb-2">Boolean Randomizer Values:</h2><ul>';
+            for (const [description, value] of Object.entries(booleanValues)) {
+                booleanHTML += `<li><strong>${description}:</strong> ${value}</li>`;
+            }
+            booleanHTML += '</ul>';
+            document.getElementById('booleanValues').innerHTML = booleanHTML;
+
+            const simulationResults = [];
+            for (let i = 0; i < numSimulations; i++) {
+                simulationResults.push(pullBoosterPack(probabilities));
+            }
+
+            displayTotalCount(simulationResults);
+            displayResults(simulationResults);
+        });
+    </script>
+</body>
+</html>
