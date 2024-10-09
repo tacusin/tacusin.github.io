@@ -14,6 +14,27 @@
                 <label for="simulations" class="block text-sm font-medium text-gray-700">Number of Simulations:</label>
                 <input type="number" id="simulations" name="simulations" min="1" value="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Wildcard Probabilities:</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="commonProb" class="block text-sm font-medium text-gray-700">Common:</label>
+                        <input type="number" id="commonProb" name="commonProb" min="0" max="100" value="84.51" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="rareProb" class="block text-sm font-medium text-gray-700">Rare:</label>
+                        <input type="number" id="rareProb" name="rareProb" min="0" max="100" value="12.07" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="superRareProb" class="block text-sm font-medium text-gray-700">Super Rare:</label>
+                        <input type="number" id="superRareProb" name="superRareProb" min="0" max="100" value="2.41" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="ultraRareProb" class="block text-sm font-medium text-gray-700">Ultra Rare:</label>
+                        <input type="number" id="ultraRareProb" name="ultraRareProb" min="0" max="100" value="1.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
             <button id="runSimulations" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Run Simulations
             </button>
@@ -22,18 +43,19 @@
     </div>
 
     <script>
-        function getRandomCard() {
+        function getRandomCard(probabilities) {
             const rand = Math.random() * 100;
-            if (rand < 96.58) {
-                // Common or Rare
-                return Math.random() < 0.875 ? 'Common' : 'Rare';
-            } else {
-                // Super Rare or Ultra Rare
-                return Math.random() < 0.7047 ? 'Super Rare' : 'Ultra Rare';
+            let cumulativeProb = 0;
+            for (const [rarity, prob] of Object.entries(probabilities)) {
+                cumulativeProb += prob;
+                if (rand < cumulativeProb) {
+                    return rarity;
+                }
             }
+            return 'Common'; // Fallback in case of rounding errors
         }
 
-        function pullBoosterPack() {
+        function pullBoosterPack(probabilities) {
             const pack = {
                 Common: 7,
                 Rare: 1,
@@ -42,7 +64,7 @@
             };
 
             // Pull the wildcard
-            const wildcard = getRandomCard();
+            const wildcard = getRandomCard(probabilities);
             pack[wildcard]++;
 
             return pack;
@@ -65,9 +87,22 @@
 
         document.getElementById('runSimulations').addEventListener('click', () => {
             const numSimulations = parseInt(document.getElementById('simulations').value);
+            const probabilities = {
+                Common: parseFloat(document.getElementById('commonProb').value),
+                Rare: parseFloat(document.getElementById('rareProb').value),
+                'Super Rare': parseFloat(document.getElementById('superRareProb').value),
+                'Ultra Rare': parseFloat(document.getElementById('ultraRareProb').value)
+            };
+
+            // Normalize probabilities
+            const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
+            for (const rarity in probabilities) {
+                probabilities[rarity] = (probabilities[rarity] / total) * 100;
+            }
+
             const simulationResults = [];
             for (let i = 0; i < numSimulations; i++) {
-                simulationResults.push(pullBoosterPack());
+                simulationResults.push(pullBoosterPack(probabilities));
             }
             displayResults(simulationResults);
         });
