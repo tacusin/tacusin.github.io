@@ -39,6 +39,7 @@
                 Run Simulations
             </button>
             <div id="booleanValues" class="mt-4"></div>
+            <div id="totalCount" class="mt-4"></div>
             <div id="result" class="mt-4 max-h-96 overflow-y-auto"></div>
         </div>
     </div>
@@ -68,20 +69,20 @@
             const wildcard = getRandomCard(probabilities);
             pack[wildcard]++;
 
-            return pack;
+            return { pack, wildcard };
         }
 
         function displayResults(results) {
             let resultHTML = '<h2 class="text-xl font-semibold mb-2">Simulation Results:</h2>';
-            results.forEach((pack, index) => {
+            results.forEach((result, index) => {
                 resultHTML += `<div class="mb-4 ${index > 0 ? 'border-t pt-4' : ''}">`;
                 resultHTML += `<h3 class="font-semibold">Simulation ${index + 1}:</h3><ul>`;
-                for (const [rarity, count] of Object.entries(pack)) {
+                for (const [rarity, count] of Object.entries(result.pack)) {
                     if (count > 0) {
                         resultHTML += `<li>${rarity}: ${count}</li>`;
                     }
                 }
-                resultHTML += '</ul></div>';
+                resultHTML += `</ul><p><strong>Wildcard:</strong> ${result.wildcard}</p></div>`;
             });
             document.getElementById('result').innerHTML = resultHTML;
         }
@@ -106,6 +107,20 @@
                 'Common vs Rare (if Common/Rare)': bool2.toFixed(4),
                 'Super Rare vs Ultra Rare (if Super/Ultra)': bool3.toFixed(4)
             };
+        }
+
+        function displayTotalCount(results) {
+            const totalCount = results.reduce((count, result) => {
+                count[result.wildcard] = (count[result.wildcard] || 0) + 1;
+                return count;
+            }, {});
+
+            let totalHTML = '<h2 class="text-xl font-semibold mb-2">Total Wildcard Count:</h2><ul>';
+            for (const [rarity, count] of Object.entries(totalCount)) {
+                totalHTML += `<li><strong>${rarity}:</strong> ${count} (${((count / results.length) * 100).toFixed(2)}%)</li>`;
+            }
+            totalHTML += '</ul>';
+            document.getElementById('totalCount').innerHTML = totalHTML;
         }
 
         document.getElementById('runSimulations').addEventListener('click', () => {
@@ -136,6 +151,8 @@
             for (let i = 0; i < numSimulations; i++) {
                 simulationResults.push(pullBoosterPack(probabilities));
             }
+
+            displayTotalCount(simulationResults);
             displayResults(simulationResults);
         });
     </script>
