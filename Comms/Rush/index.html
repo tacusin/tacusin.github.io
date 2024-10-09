@@ -38,6 +38,7 @@
             <button id="runSimulations" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Run Simulations
             </button>
+            <div id="booleanValues" class="mt-4"></div>
             <div id="result" class="mt-4 max-h-96 overflow-y-auto"></div>
         </div>
     </div>
@@ -85,6 +86,28 @@
             document.getElementById('result').innerHTML = resultHTML;
         }
 
+        function calculateBooleanValues(probabilities) {
+            const normalizedProbs = {...probabilities};
+            const total = Object.values(normalizedProbs).reduce((sum, prob) => sum + prob, 0);
+            for (const rarity in normalizedProbs) {
+                normalizedProbs[rarity] = (normalizedProbs[rarity] / total) * 100;
+            }
+
+            const commonRareProb = normalizedProbs.Common + normalizedProbs.Rare;
+            const superRareProb = normalizedProbs['Super Rare'];
+            const ultraRareProb = normalizedProbs['Ultra Rare'];
+
+            const bool1 = commonRareProb / (commonRareProb + superRareProb + ultraRareProb);
+            const bool2 = normalizedProbs.Common / commonRareProb;
+            const bool3 = superRareProb / (superRareProb + ultraRareProb);
+
+            return {
+                'Common or Rare vs Super/Ultra Rare': bool1.toFixed(4),
+                'Common vs Rare (if Common/Rare)': bool2.toFixed(4),
+                'Super Rare vs Ultra Rare (if Super/Ultra)': bool3.toFixed(4)
+            };
+        }
+
         document.getElementById('runSimulations').addEventListener('click', () => {
             const numSimulations = parseInt(document.getElementById('simulations').value);
             const probabilities = {
@@ -94,7 +117,16 @@
                 'Ultra Rare': parseFloat(document.getElementById('ultraRareProb').value)
             };
 
-            // Normalize probabilities
+            // Calculate and display boolean values
+            const booleanValues = calculateBooleanValues(probabilities);
+            let booleanHTML = '<h2 class="text-xl font-semibold mb-2">Boolean Randomizer Values:</h2><ul>';
+            for (const [description, value] of Object.entries(booleanValues)) {
+                booleanHTML += `<li><strong>${description}:</strong> ${value}</li>`;
+            }
+            booleanHTML += '</ul>';
+            document.getElementById('booleanValues').innerHTML = booleanHTML;
+
+            // Normalize probabilities for simulation
             const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
             for (const rarity in probabilities) {
                 probabilities[rarity] = (probabilities[rarity] / total) * 100;
