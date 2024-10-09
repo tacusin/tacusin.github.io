@@ -45,11 +45,9 @@
             
             const superRareProb = expectedSuperRare / simulations;
             const ultraRareProb = expectedUltraRare / simulations;
-            const rareProb = (1 - superRareProb - ultraRareProb) * 0.125; // 1/8 of remaining probability
-            const commonProb = 1 - superRareProb - ultraRareProb - rareProb;
+            const rareProb = 1 - superRareProb - ultraRareProb;
 
             return {
-                Common: commonProb * 100,
                 Rare: rareProb * 100,
                 'Super Rare': superRareProb * 100,
                 'Ultra Rare': ultraRareProb * 100
@@ -75,13 +73,13 @@
                     return rarity;
                 }
             }
-            return 'Common'; // Fallback in case of rounding errors
+            return 'Rare'; // Fallback in case of rounding errors
         }
 
         function pullBoosterPack(probabilities) {
             const pack = {
-                Common: 7,
-                Rare: 1,
+                Common: 8,
+                Rare: 0,
                 'Super Rare': 0,
                 'Ultra Rare': 0
             };
@@ -109,18 +107,16 @@
         }
 
         function calculateBooleanValues(probabilities) {
-            const commonRareProb = probabilities.Common + probabilities.Rare;
+            const rareProb = probabilities.Rare;
             const superRareProb = probabilities['Super Rare'];
             const ultraRareProb = probabilities['Ultra Rare'];
 
-            const bool1 = commonRareProb / 100;
-            const bool2 = probabilities.Common / commonRareProb;
-            const bool3 = superRareProb / (superRareProb + ultraRareProb);
+            const bool1 = rareProb / 100;
+            const bool2 = superRareProb / (superRareProb + ultraRareProb);
 
             return {
-                'Common or Rare vs Super/Ultra Rare': bool1.toFixed(4),
-                'Common vs Rare (if Common/Rare)': bool2.toFixed(4),
-                'Super Rare vs Ultra Rare (if Super/Ultra)': bool3.toFixed(4)
+                'Rare vs Super/Ultra Rare': bool1.toFixed(4),
+                'Super Rare vs Ultra Rare (if Super/Ultra)': bool2.toFixed(4)
             };
         }
 
